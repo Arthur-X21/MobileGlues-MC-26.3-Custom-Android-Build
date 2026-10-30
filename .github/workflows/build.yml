@@ -12,6 +12,8 @@ jobs:
     name: Build libmobileglues.so
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
 
     steps:
       - name: Check out patch repository
@@ -23,14 +25,20 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: |
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | sort -V | tail -n 1)
+          yes | "$SDKMANAGER" --licenses || true
 
       - name: Install Android NDK 27
-        run: sdkmanager "ndk;27.0.12077973"
+        run: |
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | sort -V | tail -n 1)
+          "$SDKMANAGER" --install "ndk;27.0.12077973"
 
-      - name: Install Ninja
-        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Install CMake and Ninja
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build
 
       - name: Build patched MobileGlues
         run: |
